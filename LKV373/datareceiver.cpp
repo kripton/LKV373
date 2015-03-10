@@ -36,8 +36,8 @@ void dataReceiver::startReceive()
     run = true;
     while (run)
     {
-        QByteArray array(1200, 0);
-        recv(sock, array.data(), 1200, 0);
+        QByteArray array(1200, 0xff);
+        ssize_t packetLength = recv(sock, array.data(), 1200, 0);
 
         if (array.data()[23] != 0x11) continue; // Not UDP
 
@@ -54,7 +54,7 @@ void dataReceiver::startReceive()
         quint32* ports = (quint32*)(array.data() + 34);
         if (*ports == 0x14081408)
         {
-            // Video data
+            // Video data (port = 2068)
 
             // Payload starts after all headers, length is taken from UDP header. Length in IP header is wrong!
             char* dataPtr = array.data() + 42;
@@ -98,12 +98,17 @@ void dataReceiver::startReceive()
         }
         else if (*ports == 0x12081208)
         {
-            // Audio data
+            // Audio data (port = 2066)
 
-            // Payload starts after all headers; 16 bytes are skipped
-            char* dataPtr = array.data() + 42 + 16;
-            quint16 length = array.data()[38] * 256 + array.data()[39] - 16;
-            QByteArray data(dataPtr, 1000); // TODO: Use length from UDP header? Or from IP header? Or Fixed size?
+            // Payload starts after all headers (Ethernet + IPv4 + UDP); 16 byte of payload are skipped
+            char* dataPtr = array.data() + 14 + 20 + 8 + 16;
+
+            // I can explain everything but the 2 that needs to be subtracted. It just works this way ...
+            quint16 length = packetLength - (14 + 20 + 8 + 16) - 2;
+
+            // qDebug() << "PACKET LENGTH" << packetLength << "DATA LENGTH:" << length;
+
+            QByteArray data(dataPtr, length);
             emit newAudioChunk(data);
         }
     }
