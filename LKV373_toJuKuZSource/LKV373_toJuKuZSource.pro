@@ -18,11 +18,13 @@ LIBS += -L../LKV373 -lLKV373
 
 SOURCES += main.cpp \
     worker.cpp \
-    lkv373videoappsrc.cpp
+    lkv373videoappsrc.cpp \
+    lkv373audioappsrc.cpp
 
 HEADERS  += \
     worker.h \
-    lkv373videoappsrc.h
+    lkv373videoappsrc.h \
+    lkv373audioappsrc.h
 
 # Tell qmake to use pkg-config to find QtGStreamer
 CONFIG += link_pkgconfig
