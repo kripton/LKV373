@@ -12,7 +12,7 @@
 
 #include "hdmireceiver.h"
 
-#include "lkv373appsrc.h"
+#include "lkv373videoappsrc.h"
 
 class Worker : public QObject
 {
@@ -29,7 +29,7 @@ private slots:
 
 private:
     HdmiReceiver* recv;
-    LKV373AppSrc appsrc;
+    LKV373VideoAppSrc videoappsrc;
     QGst::PipelinePtr pipeline;
 
     void onBusMessage(const QGst::MessagePtr & message);

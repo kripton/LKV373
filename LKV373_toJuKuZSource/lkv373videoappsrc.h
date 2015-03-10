@@ -1,5 +1,5 @@
-#ifndef LKV373APPSRC_H
-#define LKV373APPSRC_H
+#ifndef LKV373VIDEOAPPSRC_H
+#define LKV373VIDEOAPPSRC_H
 
 #include <QObject>
 #include <QByteArray>
@@ -10,13 +10,13 @@
 #include <QGst/Buffer>
 #include <QGst/Utils/ApplicationSource>
 
-class LKV373AppSrc : public QObject, public QGst::Utils::ApplicationSource
+class LKV373VideoAppSrc : public QObject, public QGst::Utils::ApplicationSource
 {
     Q_OBJECT
 
 public:
-    explicit LKV373AppSrc(QObject *parent = 0);
-    ~LKV373AppSrc();
+    explicit LKV373VideoAppSrc(QObject *parent = 0);
+    ~LKV373VideoAppSrc();
 
 private:
     QTime timer;
@@ -28,4 +28,4 @@ public slots:
     void newFrame(QByteArray frameData);
 };
 
-#endif // LKV373APPSRC_H
+#endif // LKV373VIDEOAPPSRC_H

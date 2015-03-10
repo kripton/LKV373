@@ -1,6 +1,6 @@
-#include "lkv373appsrc.h"
+#include "lkv373videoappsrc.h"
 
-LKV373AppSrc::LKV373AppSrc(QObject *parent) : QObject(parent)
+LKV373VideoAppSrc::LKV373VideoAppSrc(QObject *parent) : QObject(parent)
 {
     for (int i = 0; i < 10; i++)
     {
@@ -9,11 +9,11 @@ LKV373AppSrc::LKV373AppSrc(QObject *parent) : QObject(parent)
     timer.start();
 }
 
-LKV373AppSrc::~LKV373AppSrc()
+LKV373VideoAppSrc::~LKV373VideoAppSrc()
 {
 }
 
-qreal LKV373AppSrc::calculateFps()
+qreal LKV373VideoAppSrc::calculateFps()
 {
     qreal fps;
     for (int i = 0; i < 10; i++)
@@ -23,7 +23,7 @@ qreal LKV373AppSrc::calculateFps()
     return 1.0/fps*10000.0;
 }
 
-void LKV373AppSrc::newFrame(QByteArray frameData)
+void LKV373VideoAppSrc::newFrame(QByteArray frameData)
 {
     frameDiffs.enqueue(timer.elapsed());
     frameDiffs.dequeue();

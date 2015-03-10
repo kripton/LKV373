@@ -39,8 +39,8 @@ void Worker::onControlPacket(QHostAddress sender, bool link, quint16 width, quin
 
         pipeline = QGst::Parse::launch(pipeDesc).dynamicCast<QGst::Pipeline>();
 
-        appsrc.setElement(pipeline->getElementByName("videosrc"));
-        connect(recv, SIGNAL(newVideoFrame(QByteArray)), &appsrc, SLOT(newFrame(QByteArray)));
+        videoappsrc.setElement(pipeline->getElementByName("videosrc"));
+        connect(recv, SIGNAL(newVideoFrame(QByteArray)), &videoappsrc, SLOT(newFrame(QByteArray)));
 
         QGlib::connect(pipeline->bus(), "message", this, &Worker::onBusMessage);
         pipeline->bus()->addSignalWatch();

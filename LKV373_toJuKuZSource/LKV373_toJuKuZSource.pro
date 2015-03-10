@@ -17,12 +17,12 @@ INCLUDEPATH += ../LKV373
 LIBS += -L../LKV373 -lLKV373
 
 SOURCES += main.cpp \
-    lkv373appsrc.cpp \
-    worker.cpp
+    worker.cpp \
+    lkv373videoappsrc.cpp
 
 HEADERS  += \
-    lkv373appsrc.h \
-    worker.h
+    worker.h \
+    lkv373videoappsrc.h
 
 # Tell qmake to use pkg-config to find QtGStreamer
 CONFIG += link_pkgconfig
