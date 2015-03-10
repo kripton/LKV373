@@ -18,7 +18,9 @@ class Worker : public QObject
 {
     Q_OBJECT
 public:
-    explicit Worker(QObject *parent = 0);
+    explicit Worker(QString sender_address, QObject *parent = 0);
+    int forcedFramerate;
+    QString outgoingIP;
 
 signals:
 

@@ -1,9 +1,14 @@
 #include "worker.h"
 
-Worker::Worker(QObject *parent) :
+Worker::Worker(QString sender_address, QObject *parent) :
     QObject(parent)
 {
-    recv = new HdmiReceiver(0, QHostAddress("192.168.168.55"));
+    recv = new HdmiReceiver(0, QHostAddress(sender_address));
+
+    recv->parseFrames = true;
+    forcedFramerate = 0;
+    outgoingIP = "127.0.0.1";
+
     connect(recv, SIGNAL(controlPacketReceived(QHostAddress,bool,quint16,quint16,qreal)), this, SLOT(onControlPacket(QHostAddress,bool,quint16,quint16,qreal)));
 }
 
@@ -16,10 +21,19 @@ void Worker::onControlPacket(QHostAddress sender, bool link, quint16 width, quin
 
     if (pipeline.isNull())
     {
+        if (forcedFramerate != 0)
+        {
+            fps = forcedFramerate - 0.5;
+        }
+
+        quint16 port = 6000 + (sender.toIPv4Address() & 0xFF);
+
         QString pipeDesc = QString(" appsrc name=videosrc caps=\"%1\" is-live=true do-timestamp=true format=time ! "
-                                   " jpegparse ! videorate ! matroskamux streamable=true name=mux ! tcpserversink host=192.168.189.201 port=5002"
+                                   " jpegparse ! videorate ! matroskamux streamable=true name=mux ! tcpserversink host=%2 port=%3"
                                    " audiotestsrc ! audio/x-raw,channels=2,rate=48000 ! vorbisenc ! mux.")
-                .arg(QString("image/jpeg,width=%1,height=%2,framerate=%3/1").arg(width).arg(height).arg((int)(fps+0.5)));
+                .arg(QString("image/jpeg,width=%1,height=%2,framerate=%3/1").arg(width).arg(height).arg((int)(fps+0.5)))
+                .arg(outgoingIP)
+                .arg(port);
 
         qDebug() << "PIPE:" << pipeDesc;
 

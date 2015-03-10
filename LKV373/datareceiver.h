@@ -1,6 +1,7 @@
 #ifndef DATARECEIVER_H
 #define DATARECEIVER_H
 
+#include <QDebug>
 #include <QObject>
 #include <QHostAddress>
 

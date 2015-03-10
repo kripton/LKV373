@@ -1,12 +1,12 @@
 #include "hdmireceiver.h"
 
-HdmiReceiver::HdmiReceiver(QObject *parent, QHostAddress address) :
+HdmiReceiver::HdmiReceiver(QObject *parent, QHostAddress sender_address) :
     QObject(parent)
 {
     parseFrames = false;
     emitInvalidFrames = false;
 
-    this->address = address;
+    this->sender_address = sender_address;
 
     // The control data is well-formed, so we can use a normal QUdpSocket for that
     udpControlDataSocket = new QUdpSocket(this);
@@ -37,7 +37,7 @@ void HdmiReceiver::readControlDatagram()
 
         udpControlDataSocket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
 
-        if ((address != QHostAddress::Any) && (address != sender))
+        if ((sender_address != QHostAddress::Any) && (sender_address != sender))
         {
             return;
         }
@@ -73,7 +73,7 @@ void HdmiReceiver::readControlDatagram()
             receiver->moveToThread(&receiverThread);
             connect(this, SIGNAL(startDataReceiver()), receiver, SLOT(startReceive()));
             connect(this, SIGNAL(stopDataReceiver()), receiver, SLOT(stopReceive()));
-            connect(receiver, SIGNAL(newVideoFrame(QByteArray)), this, SLOT(recvNewVideoFrame(QByteArray)));
+            connect(receiver, SIGNAL(newVideoFrame(QByteArray, bool)), this, SLOT(recvNewVideoFrame(QByteArray, bool)));
             connect(receiver, SIGNAL(newAudioChunk(QByteArray)), this, SLOT(recvAudioChunk(QByteArray)));
             receiverThread.start();
             emit startDataReceiver();
@@ -92,6 +92,7 @@ void HdmiReceiver::recvNewVideoFrame(QByteArray frameData, bool frameValid)
     if (!emitInvalidFrames && !frameValid)
     {
         // InvalidFrames are unwanted and frame was considered invalid (chunks missing)
+        //qWarning() << "HdmiReceiver FRAME INVALID";
         return;
     }
 
@@ -101,10 +102,13 @@ void HdmiReceiver::recvNewVideoFrame(QByteArray frameData, bool frameValid)
         if (!pixmap.loadFromData(frameData))
         {
             // Frame data invalid (according to the parser), do NOT emit it
+            qWarning() << "HdmiReceiver FRAME failed to parse!";
             return;
         }
+        //qDebug() << "PIXMAP:" << pixmap.width() << "x" << pixmap.height();
     }
 
+    //qDebug() << "HdmiReceiver EMITTING FRAME";
     emit newVideoFrame(frameData);
 }
 

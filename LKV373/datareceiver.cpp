@@ -88,7 +88,7 @@ void dataReceiver::startReceive()
                 }
                 lastFrameNo = frameNo;
 
-                qDebug() << "GOT FRAME" << frameNo;
+                //qDebug() << "DATARECEIVER GOT FRAME" << frameNo;
 
                 emit newVideoFrame(frame, frameValid);
                 frameValid = true;

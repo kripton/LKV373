@@ -1,6 +1,7 @@
 #ifndef HDMIRECEIVER_H
 #define HDMIRECEIVER_H
 
+#include <QDebug>
 #include <QObject>
 #include <QUdpSocket>
 #include <QNetworkInterface>
@@ -13,14 +14,14 @@ class Q_DECL_EXPORT HdmiReceiver : public QObject
 {
     Q_OBJECT
 public:
-    explicit HdmiReceiver(QObject *parent = 0, QHostAddress address = QHostAddress::Any);
+    explicit HdmiReceiver(QObject *parent = 0, QHostAddress sender_address = QHostAddress::Any);
     ~HdmiReceiver();
 
     bool parseFrames;
     bool emitInvalidFrames;
 
 private:
-    QHostAddress address;
+    QHostAddress sender_address;
     QUdpSocket* udpControlDataSocket;
 
     QThread receiverThread;
