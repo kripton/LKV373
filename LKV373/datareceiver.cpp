@@ -18,6 +18,13 @@ bool dataReceiver::init(QHostAddress sender)
     return false;
 }
 
+void dataReceiver::changeSender(QHostAddress sender)
+{
+    this->sender = sender;
+    expectedChunk = 0;
+    lastFrameNo = 0;
+}
+
 void dataReceiver::startReceive()
 {
     bool frameValid = false; // First frame to be considered invalid

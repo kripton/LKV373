@@ -8,12 +8,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+//! Worker class that receives RAW packets, filters them and
+//! emits video frames and audio chunks as QByteArray.
+//! Needs to run in an separate thread since it loops endlessly.
 class dataReceiver : public QObject
 {
     Q_OBJECT
 public:
     explicit dataReceiver(QObject *parent = 0);
     bool init(QHostAddress sender);
+    void changeSender(QHostAddress sender);
 
 private:
     bool run;

@@ -10,11 +10,14 @@
 
 #include "datareceiver.h"
 
+//! Handles control packets (receiving and replying to them)
+//! and emits frames and audio chunks as QByteArray.
+//! Starts DataReceiver in separate thread, starts and stops it.
 class Q_DECL_EXPORT HdmiReceiver : public QObject
 {
     Q_OBJECT
 public:
-    explicit HdmiReceiver(QObject *parent = 0, QHostAddress sender_address = QHostAddress::Any);
+    explicit HdmiReceiver(QObject *parent = 0);
     ~HdmiReceiver();
 
     bool parseFrames;
@@ -37,6 +40,7 @@ signals:
 
 public slots:
     void readControlDatagram();
+    void setSender(QHostAddress sender);
 
 private slots:
     void recvNewVideoFrame(QByteArray frameData, bool frameValid);

@@ -1,12 +1,12 @@
 #include "hdmireceiver.h"
 
-HdmiReceiver::HdmiReceiver(QObject *parent, QHostAddress sender_address) :
+HdmiReceiver::HdmiReceiver(QObject *parent) :
     QObject(parent)
 {
     parseFrames = false;
     emitInvalidFrames = false;
 
-    this->sender_address = sender_address;
+    this->sender_address = QHostAddress::Null;
 
     // The control data is well-formed, so we can use a normal QUdpSocket for that
     udpControlDataSocket = new QUdpSocket(this);
@@ -23,7 +23,7 @@ HdmiReceiver::HdmiReceiver(QObject *parent, QHostAddress sender_address) :
 
 HdmiReceiver::~HdmiReceiver()
 {
-    // It's actually a bad idea to leave the multicast-group here since other instances might still run
+    // Stop the DataReceiver
     emit stopDataReceiver();
 }
 
@@ -36,11 +36,6 @@ void HdmiReceiver::readControlDatagram()
         quint16 senderPort;
 
         udpControlDataSocket->readDatagram(datagram.data(), datagram.size(), &sender, &senderPort);
-
-        if ((sender_address != QHostAddress::Any) && (sender_address != sender))
-        {
-            return;
-        }
 
         if (senderPort != 48689)
         {
@@ -61,6 +56,11 @@ void HdmiReceiver::readControlDatagram()
 
         qDebug() << "CONTROL DATAGRAM from" << sender.toString() << "controlFrameCount" << packetNumber << "LINK:" << link << QString("%1x%2@%3").arg(frameWidth).arg(frameHeight).arg(frameFPS);
         emit controlPacketReceived(sender, link, frameWidth, frameHeight, frameFPS);
+
+        if ((sender_address == QHostAddress::Null) || ((sender_address != QHostAddress::Any) && (sender_address != sender)))
+        {
+            return;
+        }
 
         if (receiver == 0)
         {
@@ -87,12 +87,20 @@ void HdmiReceiver::readControlDatagram()
     }
 }
 
+void HdmiReceiver::setSender(QHostAddress sender)
+{
+    sender_address = sender;
+    if (receiver != NULL)
+    {
+        receiver->changeSender(sender);
+    }
+}
+
 void HdmiReceiver::recvNewVideoFrame(QByteArray frameData, bool frameValid)
 {
     if (!emitInvalidFrames && !frameValid)
     {
         // InvalidFrames are unwanted and frame was considered invalid (chunks missing)
-        //qWarning() << "HdmiReceiver FRAME INVALID";
         return;
     }
 
@@ -105,10 +113,8 @@ void HdmiReceiver::recvNewVideoFrame(QByteArray frameData, bool frameValid)
             qWarning() << "HdmiReceiver FRAME failed to parse!";
             return;
         }
-        //qDebug() << "PIXMAP:" << pixmap.width() << "x" << pixmap.height();
     }
 
-    //qDebug() << "HdmiReceiver EMITTING FRAME";
     emit newVideoFrame(frameData);
 }
 
