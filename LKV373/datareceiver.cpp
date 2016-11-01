@@ -5,12 +5,14 @@ dataReceiver::dataReceiver(QObject *parent) :
 {
     run = false;
     sock = 0;
+    ifindex = 0xFFFF;
+    addr_len = sizeof(src_addr);
 }
 
 bool dataReceiver::init(QHostAddress sender)
 {
     this->sender = sender;
-    sock = socket(AF_PACKET, SOCK_RAW, ntohs(3));
+    sock = socket(AF_PACKET, SOCK_RAW, ntohs(ETH_P_IP));
     if (sock > 0)
     {
         return true;
@@ -43,24 +45,49 @@ void dataReceiver::startReceive()
     run = true;
     while (run)
     {
-        // TODO: There seems to a problem when the packages passed through a VLAN
-        //       Either they are silently corrupted by the switch/VLAN stack
-        //       OR our offset calculations just don't fit :/
-        //       However, we actually expect untagged, unchanged packets at our virtual interfaces, right?
-
         QByteArray array(1200, 0xff);
-        ssize_t packetLength = recv(sock, array.data(), 1200, 0);
+        ssize_t packetLength = recvfrom(sock, array.data(), 1200, 0, (struct sockaddr*)&src_addr, &addr_len);
+
+        /*
+            struct sockaddr_ll {
+                unsigned short sll_family;   // Always AF_PACKET            => CHECK (= 17)
+                unsigned short sll_protocol; // Physical layer protocol     => Don't know where to find constant or what it means, but we want 8
+                int            sll_ifindex;  // Interface number            => Saved at first incoming packet and compared on all others
+                unsigned short sll_hatype;   // ARP hardware type
+                unsigned char  sll_pkttype;  // Packet type                 => Don't know where to find constant or what it means, but we want 2
+                unsigned char  sll_halen;    // Length of address
+                unsigned char  sll_addr[8];  // Physical layer address
+            };
+         */
+        //qDebug() << "sll_family" << src_addr.sll_family << "sll_protocol" << src_addr.sll_protocol << "ifindex" << src_addr.sll_ifindex << "hatype" << src_addr.sll_hatype << "pkttype" << src_addr.sll_pkttype;
+
+        // Early sanity checks
+        if ((src_addr.sll_family != 17) || (src_addr.sll_protocol != 8) || (src_addr.sll_pkttype != 2))
+        {
+            continue;
+        }
+
+        // Incoming interface check
+        if (ifindex == 0xFFFF)
+        {
+            // This is the first packet. Remember which interface we read it on
+            ifindex = src_addr.sll_ifindex;
+        }
+        else if (ifindex != src_addr.sll_ifindex)
+        {
+            // Ignore packet which arrived on another interface than the first packet
+            // In the VLAN use case, we receive every packet twice
+            continue;
+        }
 
         if (array.data()[23] != 0x11)
         {
-            qDebug() << "Not UDP";
             continue; // Not UDP
         }
 
         quint64* ethSourceAndProto = (quint64*)(array.data() + 6);
         if (*ethSourceAndProto != 0x0008016000780b00)
         {
-            qDebug() << "Source MAC or Proto (= IP) didn't match";
             continue; // Source MAC or Proto (= IP) didn't match
         }
 
@@ -68,7 +95,6 @@ void dataReceiver::startReceive()
         *source = ntohl(*source);
         if (*source != sender.toIPv4Address())
         {
-            qDebug() << "Source IP didn't match";
             continue; // Source IP didn't match
         }
 
@@ -93,7 +119,7 @@ void dataReceiver::startReceive()
                 lastChunk = true;
             }
 
-            qDebug() << "length:" << length << "frameNo:" << frameNo << "chunkNo:" << chunkNo << "lastChunk:" << lastChunk;
+            //qDebug() << "length:" << length << "frameNo:" << frameNo << "chunkNo:" << chunkNo << "lastChunk:" << lastChunk;
 
             if ((!lastChunk) && (chunkNo != expectedChunk))
             {
@@ -129,6 +155,8 @@ void dataReceiver::startReceive()
             // Payload starts after all headers (Ethernet + IPv4 + UDP); 16 byte of payload are skipped
             char* dataPtr = array.data() + 14 + 20 + 8 + 16;
             quint16 length = packetLength - (14 + 20 + 8 + 16);
+
+            //qDebug() << "AUDIO CHUNK. Length:" << length << "MOD 8" << (length % 8);
 
             QByteArray data(dataPtr, length);
             emit newAudioChunk(data);
