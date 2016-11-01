@@ -14,7 +14,7 @@ HdmiReceiver::HdmiReceiver(QObject *parent) :
     connect(udpControlDataSocket, SIGNAL(readyRead()), this, SLOT(readControlDatagram()));
     foreach (QNetworkInterface itf, QNetworkInterface::allInterfaces())
     {
-        qDebug() << "JOIN" << udpControlDataSocket->joinMulticastGroup(QHostAddress("226.2.2.2"), itf);
+        qDebug() << "JOIN ON IF\"" << itf.humanReadableName() << "\":" << udpControlDataSocket->joinMulticastGroup(QHostAddress("226.2.2.2"), itf);
     }
 
     // The actual data receiver will be started as soon as the first control packet arrives

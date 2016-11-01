@@ -3,17 +3,24 @@
 Worker::Worker(QString sender_address, QObject *parent) :
     QObject(parent)
 {
-    recv = new HdmiReceiver(0, QHostAddress(sender_address));
+    recv = new HdmiReceiver(this);
+    sender = sender_address;
 
     recv->parseFrames = true;
     forcedFramerate = 0;
     outgoingIP = "127.0.0.1";
+    recv->setSender(QHostAddress(sender_address));
 
     connect(recv, SIGNAL(controlPacketReceived(QHostAddress,bool,quint16,quint16,qreal)), this, SLOT(onControlPacket(QHostAddress,bool,quint16,quint16,qreal)));
 }
 
 void Worker::onControlPacket(QHostAddress sender, bool link, quint16 width, quint16 height, qreal fps)
 {
+    if (sender != this->sender)
+    {
+        return;
+    }
+
     if (!link)
     {
         return;
@@ -30,8 +37,8 @@ void Worker::onControlPacket(QHostAddress sender, bool link, quint16 width, quin
 
         QString pipeDesc = QString(" appsrc name=videosrc caps=\"%1\" is-live=true do-timestamp=true format=time ! queue ! "
                                    " jpegparse ! videorate ! matroskamux streamable=true name=mux ! tcpserversink host=%2 port=%3"
-                                   " appsrc name=audiosrc is-live=true do-timestamp=true format=time ! audio/x-raw,format=S32BE,channels=2,rate=48000 ! queue ! "
-                                   " audiorate ! audioconvert ! vorbisenc ! mux.")
+                                   " appsrc name=audiosrc is-live=true do-timestamp=true format=time ! audio/x-raw,format=S32BE,channels=2,rate=48000 ! queue min-threshold-bytes=1024 ! "
+                                   " audiorate ! audioconvert ! queue ! vorbisenc ! mux.")
                 .arg(QString("image/jpeg,width=%1,height=%2,framerate=%3/1").arg(width).arg(height).arg((int)(fps+0.5)))
                 .arg(outgoingIP)
                 .arg(port);

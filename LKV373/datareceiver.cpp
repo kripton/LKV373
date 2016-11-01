@@ -43,17 +43,34 @@ void dataReceiver::startReceive()
     run = true;
     while (run)
     {
+        // TODO: There seems to a problem when the packages passed through a VLAN
+        //       Either they are silently corrupted by the switch/VLAN stack
+        //       OR our offset calculations just don't fit :/
+        //       However, we actually expect untagged, unchanged packets at our virtual interfaces, right?
+
         QByteArray array(1200, 0xff);
         ssize_t packetLength = recv(sock, array.data(), 1200, 0);
 
-        if (array.data()[23] != 0x11) continue; // Not UDP
+        if (array.data()[23] != 0x11)
+        {
+            qDebug() << "Not UDP";
+            continue; // Not UDP
+        }
 
         quint64* ethSourceAndProto = (quint64*)(array.data() + 6);
-        if (*ethSourceAndProto != 0x0008016000780b00) continue; // Source MAC or Proto (= IP) didn't match
+        if (*ethSourceAndProto != 0x0008016000780b00)
+        {
+            qDebug() << "Source MAC or Proto (= IP) didn't match";
+            continue; // Source MAC or Proto (= IP) didn't match
+        }
 
         quint32* source = (quint32*)(array.data() + 26);
         *source = ntohl(*source);
-        if (*source != sender.toIPv4Address()) continue; // Source IP didn't match
+        if (*source != sender.toIPv4Address())
+        {
+            qDebug() << "Source IP didn't match";
+            continue; // Source IP didn't match
+        }
 
         quint32* dest = (quint32*)(array.data() + 30);
         if (*dest != 0x020202e2) continue; // Dest IP (= "226.2.2.2") didn't match
@@ -75,6 +92,8 @@ void dataReceiver::startReceive()
             {
                 lastChunk = true;
             }
+
+            qDebug() << "length:" << length << "frameNo:" << frameNo << "chunkNo:" << chunkNo << "lastChunk:" << lastChunk;
 
             if ((!lastChunk) && (chunkNo != expectedChunk))
             {

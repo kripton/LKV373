@@ -33,6 +33,7 @@ private:
     LKV373VideoAppSrc videoappsrc;
     LKV373AudioAppSrc audioappsrc;
     QGst::PipelinePtr pipeline;
+    QHostAddress sender;
 
     void onBusMessage(const QGst::MessagePtr & message);
 };
