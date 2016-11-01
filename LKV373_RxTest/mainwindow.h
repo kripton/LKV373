@@ -7,6 +7,8 @@
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <QImage>
+#include <QtEndian>
+#include <QtGlobal>
 
 #include <QTime>
 #include <QQueue>
@@ -41,7 +43,8 @@ private:
     qreal calculateFps();
 
 public slots:
-    void updateLabel(QByteArray frameData);
+    void processVideoFrame(QByteArray frameData);
+    void processAudioChunk(QByteArray audioData);
     void newControlPacket(QHostAddress sender, bool link, quint16 width, quint16 height, qreal fps);
     void selectedItemChanged(QString newText);
 };

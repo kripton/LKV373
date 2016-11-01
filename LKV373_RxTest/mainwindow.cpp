@@ -21,7 +21,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     worker->parseFrames = false;
 
-    connect(worker, SIGNAL(newVideoFrame(QByteArray)), this, SLOT(updateLabel(QByteArray)));
+    connect(worker, SIGNAL(newVideoFrame(QByteArray)), this, SLOT(processVideoFrame(QByteArray)));
+    connect(worker, SIGNAL(newAudioChunk(QByteArray)), this, SLOT(processAudioChunk(QByteArray)));
     connect(worker, SIGNAL(controlPacketReceived(QHostAddress,bool,quint16,quint16,qreal)), this, SLOT(newControlPacket(QHostAddress,bool,quint16,quint16,qreal)));
 }
 
@@ -64,7 +65,7 @@ qreal MainWindow::calculateFps()
     return 1.0/fps*10000.0;
 }
 
-void MainWindow::updateLabel(QByteArray frameData)
+void MainWindow::processVideoFrame(QByteArray frameData)
 {
     frameDiffs.enqueue(timer.elapsed());
     frameDiffs.dequeue();
@@ -80,6 +81,25 @@ void MainWindow::updateLabel(QByteArray frameData)
     image = image.scaled(ui->graphicsView->width(), ui->graphicsView->height(), Qt::KeepAspectRatio, Qt::FastTransformation);
 
     pixmapItem->setPixmap(QPixmap::fromImage(image));
+}
+
+void MainWindow::processAudioChunk(QByteArray audioData)
+{
+    // Audio data is S32BE, 2ch interleaved, 48kHz
+    qint32 leftMax = 0;
+    qint32 rightMax = 0;
+    for (int i = 0; i < audioData.size(); i = i + 8)
+    {
+        qint32 leftValue = qFromBigEndian<qint32>((const uchar*)(audioData.data() + i));
+        qint32 rightValue = qFromBigEndian<qint32>((const uchar*)(audioData.data() + i + 4));
+        leftMax = qMax(leftMax, leftValue);
+        rightMax = qMax(rightMax, rightValue);
+    }
+
+    // The values divided by don't really make sense. It's 2^24/10 and okay since
+    // it's not a real Peak- or VU-meter but only to display something at least
+    ui->leftAudioSlider->setValue(leftMax/1677721);
+    ui->rightAudioSlider->setValue(rightMax/1677721);
 }
 
 void MainWindow::newControlPacket(QHostAddress sender, bool link, quint16 width, quint16 height, qreal fps)

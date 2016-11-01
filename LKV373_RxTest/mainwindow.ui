@@ -59,6 +59,47 @@
      <string>TextLabel</string>
     </property>
    </widget>
+   <widget class="QSlider" name="leftAudioSlider">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>1320</x>
+      <y>250</y>
+      <width>20</width>
+      <height>261</height>
+     </rect>
+    </property>
+    <property name="locale">
+     <locale language="German" country="Austria"/>
+    </property>
+    <property name="maximum">
+     <number>255</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
+   <widget class="QSlider" name="rightAudioSlider">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>1350</x>
+      <y>250</y>
+      <width>20</width>
+      <height>261</height>
+     </rect>
+    </property>
+    <property name="maximum">
+     <number>255</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+   </widget>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
