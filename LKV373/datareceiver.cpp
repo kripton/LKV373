@@ -128,11 +128,7 @@ void dataReceiver::startReceive()
 
             // Payload starts after all headers (Ethernet + IPv4 + UDP); 16 byte of payload are skipped
             char* dataPtr = array.data() + 14 + 20 + 8 + 16;
-
-            // I can explain everything but the 2 that needs to be subtracted. It just works this way ...
-            quint16 length = packetLength - (14 + 20 + 8 + 16) - 2;
-
-            // qDebug() << "PACKET LENGTH" << packetLength << "DATA LENGTH:" << length;
+            quint16 length = packetLength - (14 + 20 + 8 + 16);
 
             QByteArray data(dataPtr, length);
             emit newAudioChunk(data);

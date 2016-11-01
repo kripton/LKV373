@@ -36,9 +36,9 @@ void Worker::onControlPacket(QHostAddress sender, bool link, quint16 width, quin
         quint16 port = 6000 + (sender.toIPv4Address() & 0xFF);
 
         QString pipeDesc = QString(" appsrc name=videosrc caps=\"%1\" is-live=true do-timestamp=true format=time ! queue ! "
-                                   " jpegparse ! videorate ! matroskamux streamable=true name=mux ! tcpserversink host=%2 port=%3"
+                                   " jpegparse ! videorate ! queue ! matroskamux streamable=true name=mux ! tcpserversink host=%2 port=%3"
                                    " appsrc name=audiosrc is-live=true do-timestamp=true format=time ! audio/x-raw,format=S32BE,channels=2,rate=48000 ! queue min-threshold-bytes=1024 ! "
-                                   " audiorate ! audioconvert ! queue ! vorbisenc ! mux.")
+                                   " audiorate ! audioconvert ! queue ! opusenc ! mux.")
                 .arg(QString("image/jpeg,width=%1,height=%2,framerate=%3/1").arg(width).arg(height).arg((int)(fps+0.5)))
                 .arg(outgoingIP)
                 .arg(port);

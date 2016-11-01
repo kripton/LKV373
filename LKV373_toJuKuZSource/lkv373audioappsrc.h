@@ -4,7 +4,6 @@
 #include <QObject>
 #include <QByteArray>
 #include <QTime>
-#include <QQueue>
 
 #include <QGst/Memory>
 #include <QGst/Buffer>
